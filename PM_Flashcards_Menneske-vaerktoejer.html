@@ -1,0 +1,233 @@
+<!DOCTYPE html>
+<html lang="da">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Flashcards — Menneske-værktøjer (Favari kap. 3)</title>
+<style>
+  :root{
+    --bg:#0f1720; --card:#16212e; --card2:#1c2b3a; --ink:#e8eef5; --mut:#9fb2c6;
+    --accent:#4ea1ff; --accent2:#7bd88f; --warn:#ffcf6b; --line:#26384a;
+    --shadow:0 10px 30px rgba(0,0,0,.45);
+  }
+  *{box-sizing:border-box}
+  body{
+    margin:0; font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+    background:linear-gradient(160deg,#0d141c,#0f1720 40%,#111b26); color:var(--ink);
+    min-height:100vh; padding:24px 16px 60px;
+  }
+  .wrap{max-width:720px; margin:0 auto}
+  h1{font-size:22px; margin:0 0 4px; letter-spacing:.2px}
+  .sub{color:var(--mut); font-size:14px; margin:0 0 18px; line-height:1.5}
+  .bar{display:flex; flex-wrap:wrap; gap:8px; align-items:center; margin-bottom:16px}
+  select,button{
+    font:inherit; color:var(--ink); background:var(--card2); border:1px solid var(--line);
+    border-radius:10px; padding:9px 12px; cursor:pointer; transition:.15s;
+  }
+  select:hover,button:hover{border-color:var(--accent); background:#20304180}
+  .count{color:var(--mut); font-size:13px; margin-left:auto}
+  .scene{perspective:1400px; margin:6px 0 14px}
+  .card{
+    position:relative; width:100%; min-height:340px; transform-style:preserve-3d;
+    transition:transform .5s cubic-bezier(.2,.7,.2,1); cursor:pointer;
+  }
+  .card.flip{transform:rotateY(180deg)}
+  .face{
+    position:absolute; inset:0; backface-visibility:hidden; -webkit-backface-visibility:hidden;
+    border-radius:18px; padding:26px 24px; box-shadow:var(--shadow);
+    display:flex; flex-direction:column; border:1px solid var(--line);
+  }
+  .front{background:linear-gradient(155deg,var(--card2),var(--card)); justify-content:center; align-items:center; text-align:center}
+  .back{background:linear-gradient(155deg,#17242f,#152029); transform:rotateY(180deg); justify-content:flex-start}
+  .tag{font-size:12px; letter-spacing:.14em; text-transform:uppercase; color:var(--accent); font-weight:700; margin-bottom:14px}
+  .term{font-size:27px; font-weight:750; line-height:1.25}
+  .hint{position:absolute; bottom:16px; left:0; right:0; text-align:center; color:var(--mut); font-size:12.5px}
+  .lbl{font-size:11px; letter-spacing:.14em; text-transform:uppercase; font-weight:700; margin:0 0 6px}
+  .lbl.what{color:var(--accent2)}
+  .lbl.kmd{color:var(--warn)}
+  .txt{font-size:15.5px; line-height:1.55; margin:0 0 18px}
+  .kmdbox{margin-top:auto; padding:14px 14px; background:#0f1922; border:1px solid var(--line); border-radius:12px}
+  .kmdbox .txt{margin:0}
+  .nav{display:flex; gap:10px; margin-top:6px}
+  .nav button{flex:1; padding:13px; font-weight:650}
+  .nav .flipbtn{flex:1.4; background:var(--accent); color:#06121f; border-color:var(--accent); font-weight:750}
+  .nav .flipbtn:hover{filter:brightness(1.08)}
+  .prog{height:6px; background:#0e1822; border-radius:99px; overflow:hidden; margin:2px 0 16px; border:1px solid var(--line)}
+  .prog > i{display:block; height:100%; background:linear-gradient(90deg,var(--accent),var(--accent2)); width:0; transition:.3s}
+  .grp{font-size:12px; color:var(--mut)}
+  .foot{color:var(--mut); font-size:12.5px; text-align:center; margin-top:24px; line-height:1.6}
+  kbd{background:#0e1822; border:1px solid var(--line); border-bottom-width:2px; border-radius:6px; padding:1px 6px; font-size:12px}
+  @media(max-width:520px){ .term{font-size:23px} .card{min-height:380px} }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>Menneske-værktøjer — flashcards</h1>
+  <p class="sub">Favari kap. 3 (People). Værktøjer I <b>ikke</b> brugte i KMD-projektet, men som censor kan spørge til. Forside = begreb · bagside = kort forklaring + KMD-kobling. Klik kortet for at vende.</p>
+
+  <div class="bar">
+    <select id="filter" aria-label="Filtrér gruppe">
+      <option value="all">Alle grupper</option>
+      <option value="Ledelse">Ledelse</option>
+      <option value="Teamdynamik">Teamdynamik</option>
+      <option value="Konflikt">Konflikthåndtering</option>
+      <option value="Motivation">Motivation / EQ</option>
+      <option value="Interessenter">Interessentværktøjer</option>
+    </select>
+    <button id="shuffle">🔀 Bland</button>
+    <span class="count" id="count"></span>
+  </div>
+
+  <div class="prog"><i id="progbar"></i></div>
+
+  <div class="scene">
+    <div class="card" id="card">
+      <div class="face front">
+        <div class="tag" id="grpTag"></div>
+        <div class="term" id="term"></div>
+        <div class="hint">👆 klik for at vende</div>
+      </div>
+      <div class="face back">
+        <p class="lbl what">Hvad det er</p>
+        <p class="txt" id="what"></p>
+        <div class="kmdbox">
+          <p class="lbl kmd">KMD-kobling</p>
+          <p class="txt" id="kmd"></p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="nav">
+    <button id="prev">← Forrige</button>
+    <button class="flipbtn" id="flip">Vend kort</button>
+    <button id="next">Næste →</button>
+  </div>
+
+  <p class="foot">
+    Tastatur: <kbd>←</kbd> / <kbd>→</kbd> skift kort · <kbd>mellemrum</kbd> vend<br>
+    De stærkeste KMD-koblinger: <b>Silotænkning</b> (motivationen bag reorganiseringen), <b>Tuckman</b> (de nye matrix-teams) og <b>Herzberg/Maslow</b> (motivation under jobusikkerhed).
+  </p>
+</div>
+
+<script>
+const DECK = [
+  // --- Ledelse ---
+  {g:"Ledelse", t:"Servant leadership (den tjenende leder)",
+   w:"Lederen tjener teamet frem for omvendt: fjerner forhindringer, skaber rammer, faciliterer. Man bliver effektiv, når man indser, man er facilitator — ikke autoritet. (Samme rolle som scrum masteren.)",
+   k:"I en matrix, hvor ingen enkelt akse ejer alt, virker faciliterende ledelse ofte bedre end kommando, fordi arbejdet kræver samarbejde på tværs."},
+  {g:"Ledelse", t:"Kontekstbaseret ledelse",
+   w:"Der er ikke én rigtig ledelsesstil — den rigtige afhænger af situationen. En krise kræver noget andet end rolig drift; et nyt team noget andet end et modent. Dygtige ledere skifter stil.",
+   k:"KMD's faser kalder på forskellige stile: fast styring i den lovpligtige høring vs. faciliterende ledelse i den emergente matrix-opbygning."},
+  {g:"Ledelse", t:"Maxwell's 5 niveauer af ledelse",
+   w:"En trappe for HVORFOR folk følger dig: 1) Position (de skal) → 2) Permission (de vil) → 3) Production (dine resultater) → 4) People development (du udvikler dem) → 5) Pinnacle (hvem du er). Formel magt er det svageste fundament.",
+   k:"Mellemledere, der skal drive en upopulær forandring fra niveau 1 (titel), møder modstand. De har brug for niveau 2+ (tillid) for at få medarbejderne med."},
+  {g:"Ledelse", t:"At udfordre status quo",
+   w:"God ledelse betyder at turde bryde med 'sådan plejer vi'. Forandringsprojekter kræver det per definition.",
+   k:"Hele reorganiseringen ér et brud med status quo (BU/SBU → matrix); at lede den kræver villighed til at udfordre den etablerede struktur og magtbalance."},
+  {g:"Ledelse", t:"Silotænkning (organisatorisk sygdom)",
+   w:"Modvilje mod at dele information på tværs af afdelinger. Favari: alvorlig kilde til ineffektivitet, i værste fald kollaps. Tegn: jagt på syndebukke frem for selvanalyse.",
+   k:"★ Selve MOTIVATIONEN for reorganiseringen: den gamle BU/SBU-struktur skabte siloer og dobbeltfunktioner; matrixen skal nedbryde siloerne. Binder People direkte til casens formål."},
+
+  // --- Teamdynamik ---
+  {g:"Teamdynamik", t:"Tuckman-modellen",
+   w:"Faser ethvert team gennemløber: Forming (retning) → Storming (coaching) → Norming (facilitering) → Performing (delegering) → Adjourning (anerkendelse). NUANCE: teams kan falde tilbage (performing → storming) ved store forandringer; overgange kræver aktiv ledelse.",
+   k:"★ De NYE matrix-teams (Commercial × Operations) dannes fra bunden og vil gennem en storming-fase. Eksisterende, velfungerende teams kan kastes tilbage til storming af selve reorganiseringen — netop den friktion jeres kompleksitetsanalyse peger på."},
+
+  // --- Konflikt ---
+  {g:"Konflikt", t:"Grundhaltning til konflikt",
+   w:"Konflikter spreder sig 'som en steppebrand' — reager STRAKS, ellers bliver de kritiske. 'Gør det ikke personligt': fokusér på sagen, ikke personerne. NB: meningsforskelle er sunde (grundlag for innovation) — det er konflikter, der skal håndteres.",
+   k:"Den lovpligtige medarbejderinddragelse og evt. samarbejdsudvalgs-spændinger er oplagte konfliktzoner, der kræver hurtig, upersonlig håndtering."},
+  {g:"Konflikt", t:"Aktiv lytning",
+   w:"At lytte for reelt at FORSTÅ modparten — ikke bare vente på sin tur til at tale.",
+   k:"Jeres rapport fremhæver netop aktiv lytning (blandt soft skills) som det, der skal lukke engagement-gabene — noget et artefakt ikke kan producere."},
+  {g:"Konflikt", t:"DESC-metoden",
+   w:"Byg et argument til en svær modpart i 4 trin: Describe (beskriv situationen objektivt) → Express (udtryk diplomatisk din oplevelse) → Specify (foreslå konkret løsning) → Consequences (nævn følgerne, positive og negative).",
+   k:"Brugbar ramme til svære samtaler med modstandere af reorganiseringen — fx en works-council-konflikt eller en modvillig mellemleder."},
+
+  // --- Motivation ---
+  {g:"Motivation", t:"Maslow (behovspyramiden)",
+   w:"Behov er hierarkiske: fysiologiske → tryghed → sociale → anerkendelse → selvrealisering. Man kan ikke motivere på de øverste niveauer, hvis de nederste er truet.",
+   k:"★ Fyringer truer TRYGHEDSBEHOVET massivt. Så længe folk frygter for jobbet, kan man ikke forvente motivation af 'spændende nye samarbejdsformer' (højere behov)."},
+  {g:"Motivation", t:"Herzberg (hygiejne vs. motivation)",
+   w:"To FORSKELLIGE slags faktorer. Hygiejnefaktorer (løn, tryghed, forhold): mangler de, bliver folk utilfredse — men at have dem gør kun ikke-utilfreds. Motivationsfaktorer (anerkendelse, ansvar, vækst, mening): DISSE skaber ægte motivation.",
+   k:"★ Hvis KMD kun tænker fyringer i 'pakker og processer' (hygiejne), overser de, at de TILBAGEBLEVNE har brug for motivationsfaktorer — mening, ansvar, anerkendelse i den nye struktur — for reelt at bakke op."},
+  {g:"Motivation", t:"McClelland (3 behov)",
+   w:"Folk drives forskelligt: behov for Præstation (opnå noget), Tilhør (relationer) eller Magt (indflydelse). Ledelse skal tilpasses den enkeltes drivkraft.",
+   k:"Nøglespecialister KMD vil beholde, drives måske af præstation/autonomi; at lede dem gennem forandringen kræver, at man rammer netop dén drivkraft."},
+  {g:"Motivation", t:"Theory X / Y / Z",
+   w:"Menneskesyn: X = folk er dovne, skal kontrolleres (kommando). Y = folk er selvdrevne, søger ansvar, trives med tillid (facilitering). Z = langsigtet loyalitet, konsensus, helhedsomsorg.",
+   k:"En matrix/agil-inspireret organisation forudsætter reelt et Theory Y-syn (selvorganiserende, tillidsbaseret) — hvilket kolliderer med en kommando-/kontrolkultur."},
+  {g:"Motivation", t:"SMART-mål",
+   w:"Gør mål Specific, Measurable, Attainable, Relevant, Time-bound. Gør en vag ambition tællelig og tidsbundet.",
+   k:"Brugte I ikke, men kunne have skærpet OBJEKTIV-laget (fx 'ny struktur i drift senest marts 2027') — ikke det bestridte formåls-lag."},
+  {g:"Motivation", t:"Eisenhower-matrixen",
+   w:"Prioritér opgaver i haster × vigtigt: haster+vigtigt (gør nu), vigtigt-ikke-haster (planlæg), haster-ikke-vigtigt (delegér), ingen af delene (drop).",
+   k:"Personligt prioriteringsværktøj for en projektleder under pres — mindre centralt for jeres organisatoriske analyse."},
+  {g:"Motivation", t:"Kronos vs. Kairos",
+   w:"To tidsbegreber: Kronos = kronologisk, målbar urtid. Kairos = det RETTE øjeblik, den kvalitative timing. Ledelse handler ikke kun om hvor lang tid — men om at ramme det rigtige tidspunkt.",
+   k:"Timing af kommunikation er kritisk: HVORNÅR man melder fyringer/roller ud (Kairos) betyder lige så meget som selve tidsplanen (Kronos)."},
+  {g:"Motivation", t:"Suttons 'no-asshole rule'",
+   w:"Gennemgående giftige mennesker ødelægger teams og bør ikke tolereres — uanset deres faglige dygtighed. Et princip om psykologisk sikkerhed.",
+   k:"Psykologisk sikkerhed er en forudsætning for, at nye matrix-teams tør samarbejde åbent på tværs af de gamle enhedsgrænser."},
+
+  // --- Interessenter ---
+  {g:"Interessenter", t:"Stakeholder register",
+   w:"Den mest basale: en tabel med hver interessent (rolle, magt, påvirkning, holdning, forventninger, nærhed, kontakt). Hovedfejlen er at IGNORERE emnet og overlade det til tilfældige, uformelle relationer.",
+   k:"Grundlaget under jeres interessentanalyse — I identificerede den brede interessentgruppe (ELT, SLT, medarbejdere, polsk afdeling, kunder, presse …) før I prioriterede."},
+  {g:"Interessenter", t:"Power–Interest (Mendelow)  ✔ brugt",
+   w:"Placér interessenter efter magt × interesse i 4 felter: Manage Closely (høj/høj), Keep Satisfied (høj magt/lav interesse), Keep Informed (lav magt/høj interesse), Monitor (lav/lav). Prioriterer, hvor indsatsen ikke spredes for tyndt.",
+   k:"BRUGT: ELT/SLT/medarbejderrepr. → Manage Closely; NEC + kunder → Keep Satisfied; medarbejdere/mellemledere/polsk/datterselskaber → Keep Informed; presse/politik → Monitor."},
+  {g:"Interessenter", t:"Stakeholder Engagement Assessment Matrix (SEAM)  ✔ brugt",
+   w:"Plot nuværende (C) og ønsket (D) engagement på 5 niveauer: Unaware → Resistant → Neutral → Supportive → Leading. Gabet C→D viser, hvor kommunikation/ledelse skal sættes ind.",
+   k:"BRUGT: største gab hos mellemledere (Resistant→Supportive) og SLT (Supportive→Leading). Begrænsning: matrixen viser gabet, men lukker det ikke — det kræver soft skills."},
+  {g:"Interessenter", t:"Sponsoren (særlig interessent)",
+   w:"Ofte en topleder med det overordnede ansvar. Mest optaget af, at projektet skaber den VÆRDI, det blev sat i gang for, og af alignment med strategien; sikrer finansiering og strategisk opbakning.",
+   k:"ELT/NEC fungerer reelt som sponsor-niveau: de ejer beslutningen om at reorganisere og sætter den strategiske retning (jf. jeres timeline)."}
+];
+
+let deck = DECK.slice();
+let i = 0;
+const $ = id => document.getElementById(id);
+const card = $("card");
+
+function render(){
+  const c = deck[i];
+  $("grpTag").textContent = c.g;
+  $("term").textContent = c.t;
+  $("what").textContent = c.w;
+  $("kmd").textContent = c.k;
+  card.classList.remove("flip");
+  $("count").textContent = (i+1) + " / " + deck.length;
+  $("progbar").style.width = ((i+1)/deck.length*100) + "%";
+}
+function flip(){ card.classList.toggle("flip"); }
+function next(){ i = (i+1) % deck.length; render(); }
+function prev(){ i = (i-1+deck.length) % deck.length; render(); }
+
+card.addEventListener("click", flip);
+$("flip").addEventListener("click", e=>{e.stopPropagation(); flip();});
+$("next").addEventListener("click", next);
+$("prev").addEventListener("click", prev);
+
+$("shuffle").addEventListener("click", ()=>{
+  for(let a=deck.length-1;a>0;a--){const b=Math.floor(Math.random()*(a+1));[deck[a],deck[b]]=[deck[b],deck[a]];}
+  i=0; render();
+});
+
+$("filter").addEventListener("change", e=>{
+  const v = e.target.value;
+  deck = v==="all" ? DECK.slice() : DECK.filter(c=>c.g===v);
+  i=0; render();
+});
+
+document.addEventListener("keydown", e=>{
+  if(e.key==="ArrowRight") next();
+  else if(e.key==="ArrowLeft") prev();
+  else if(e.key===" "){ e.preventDefault(); flip(); }
+});
+
+render();
+</script>
+</body>
+</html>
